@@ -1,0 +1,28 @@
+content_writing_task:
+  description: >
+    Write clear, well-structured content for each slide using the Researchers' findings.  
+    Include 6 comprehensive bullet points per slide, covering all key information.  
+    Ensure clarity, relevance, and readability. Use subheadings for better organization.
+  expected_output: >
+    A comprehensive 30-slide document with:
+    - Slide titles and 6 in-depth bullet points per slide, each with at least one example and case study along with it's source(**exact webpage**) hyperlinked to the text.
+    - Subheadings and structured breakdowns where necessary.
+    - Technical/domain knowledge, supporting statistics, comparision tables(if required) for clarity.
+    - Full, structured sentences.
+    - The last slide (Slide 30) listing all references and their URLs hyperlinked
+  agent: slide_content_writer
+
+review_task:
+  description: >
+    Review the slide deck for accuracy, grammar, and adherence to guidelines.  
+    Ensure logical flow, consistency, and a professional tone.  
+    Verify all links, citations, and sources for correctness.  
+    Replace any invalid or outdated links and confirm proper citation of examples/case studies.
+  expected_output: >
+    A finalized 30-slide comprehensive document with:
+    - Reviewed content for clarity and correctness.
+    - No filler slides (e.g., hello, introduction, thank you, Q&A, discussions etc.).
+    - Verified, functional sources hyperlinked in the text.
+    - No 404 errors or expired links; sources must point to the exact webpage, not just the main site.
+    - A final reference slide (Slide 30) with properly grouped citations hyperlinked.
+  agent: final_reviewer

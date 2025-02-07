@@ -1,0 +1,26 @@
+topic_exploration_task:
+  description: >
+    Define the scope and structure of a 30-slide deck.  
+    Break the topic into 4 major subtopics per slide with clear headings and subheadings.  
+    Ensure a thorough, structured, and logically sequenced outline.
+  expected_output: >
+    A structured outline with:
+    - 30 slides, each with a title, subheadings, and slide number.
+    - A breakdown of topics and subtopics.
+    - The last slide dedicated to references.
+    - No filler slides (e.g., hello, introduction, thank you, Q&A, discussions etc.).
+  agent: topic_explorer
+
+detailed_research_task:
+  description: >
+    Conduct in-depth and compreshensive research on {topic} using the provided tool.  
+    Gather up-to-date, credible data, ensuring accuracy and relevance.  
+    Validate all sources before inclusion.
+  expected_output: >
+    A detailed 30-slide document following the topic_explorer outline, with each slide containing:
+    - Comprehensive insights based on subtopics.
+    - 2 real-world examples and 2 case studies per slide with relevant source links.
+    - Supporting statistics, data, or notable quotes and comparision tables (if applicable).
+    - Hyperlinked sources that point to the **exact webpage**, not just the main site. Don't include any base level websites.
+    - No self-generated links; only tool-validated sources.
+  agent: indepth_researcher

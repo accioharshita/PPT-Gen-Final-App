@@ -474,7 +474,7 @@ if generate_button:
                             label="📥 Download Markdown",
                             data=markdown_content,
                             file_name=f"{topic}_presentation.md",
-                            mime="text/markdown"
+                            mime="text/markdown")
                 
                 else:
                     st.error("❌ Failed to generate markdown content. Please try again.")

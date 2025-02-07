@@ -11,10 +11,11 @@ from src.ppt_flow.crews.writers.writers import Writers
 from crewai.flow.flow import Flow, start, listen
 import logging
 from typing import Optional, Dict
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2 import service_account
+import json
 import re
 import io
 
@@ -22,6 +23,11 @@ import io
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Constants
+SCOPES = [
+    "https://www.googleapis.com/auth/presentations",
+    "https://www.googleapis.com/auth/drive"
+]
 TEMPLATE_ID = "10muavbFdRofRMVp6D8RFLFIaQxdJIqoKaQzu7xKh_FU"
 
 # Set page config must be the first Streamlit command
@@ -65,35 +71,27 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-
 def get_services():
-    """Gets Google Slides and Drive services using service account credentials."""
-    SCOPES = [
-        "https://www.googleapis.com/auth/presentations",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    
+    """Gets Google Slides and Drive services using service account credentials from Streamlit secrets."""
     try:
-        # Get service account credentials from Streamlit secrets
+        # Get service account info from Streamlit secrets
         service_account_info = st.secrets["google_service_account"]
         
-        # Create credentials object from service account info
+        # Create credentials
         credentials = service_account.Credentials.from_service_account_info(
             service_account_info,
             scopes=SCOPES
         )
         
-        # Build and return the services
+        # Build services
         slides_service = build('slides', 'v1', credentials=credentials)
         drive_service = build('drive', 'v3', credentials=credentials)
         
         return slides_service, drive_service
-        
     except Exception as e:
-        logger.error(f"Error creating services: {str(e)}")
-        st.error("Failed to initialize Google services. Please check your service account configuration.")
-        return None, None
+        logger.error(f"Error getting Google services: {e}")
+        st.error("Failed to authenticate with Google services. Please check if the service account credentials are properly configured in Streamlit secrets.")
+        raise
 
 def copy_presentation(drive_service, template_id, new_title):
     """Creates a copy of the template presentation and returns its ID."""
@@ -346,24 +344,23 @@ class EduFlow(Flow):
             logger.info("Starting save phase")
             if not content:
                 raise ValueError("No content received to save")
-    
-            # Create a temporary directory using Streamlit's temp directory
-            output_dir = os.path.join("/tmp", "output")
+
+            output_dir = os.path.abspath("output")
             os.makedirs(output_dir, exist_ok=True)
-    
+
             topic = self.input_variables.get("topic")
             file_name = f"{topic}_presentation.md".replace(" ", "_").lower()
             output_path = os.path.join(output_dir, file_name)
-    
+
             logger.info(f"Writing content to {output_path}")
             logger.debug(f"Content preview: {content[:100]}...")
-    
+
             with open(output_path, "w", encoding='utf-8') as f:
                 f.write(content)
-    
+
             logger.info(f"Content saved successfully to {output_path}")
             return output_path
-    
+
         except Exception as e:
             logger.error(f"Save phase failed: {str(e)}", exc_info=True)
             raise
@@ -382,11 +379,6 @@ def create_presentation(md_file_path):
         
         slides_service, drive_service = get_services()
         
-        # Check if services were created successfully
-        if not slides_service or not drive_service:
-            st.error("Failed to initialize Google services. Please check the service account configuration.")
-            return None
-            
         presentation_id = copy_presentation(drive_service, TEMPLATE_ID, presentation_title)
         slide_data = parse_markdown(md_file_path)
         
@@ -397,8 +389,8 @@ def create_presentation(md_file_path):
         return output_path
     except Exception as e:
         logger.error(f"Error creating presentation: {str(e)}")
-        st.error(f"Failed to create presentation: {str(e)}")
-        return None
+        raise
+
 
 # Sidebar configuration
 with st.sidebar:
@@ -472,10 +464,9 @@ if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_p
     
     if create_ppt_button:
         with st.spinner("🎨 Creating PowerPoint presentation..."):
-            presentation_path = create_presentation(st.session_state.markdown_path)
-            if presentation_path and os.path.exists(presentation_path):
-                st.session_state.presentation_path = presentation_path
-                st.success(f"✅ Presentation created successfully!")
+            try:
+                st.session_state.presentation_path = create_presentation(st.session_state.markdown_path)
+                st.success(f"✅ Presentation created successfully! Saved to: {st.session_state.presentation_path}")
                 
                 # Create download button
                 with open(st.session_state.presentation_path, "rb") as file:
@@ -485,3 +476,5 @@ if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_p
                         file_name=os.path.basename(st.session_state.presentation_path),
                         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
                     )
+            except Exception as e:
+                st.error(f"❌ An error occurred while creating the presentation: {str(e)}")

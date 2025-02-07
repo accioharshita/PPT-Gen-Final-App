@@ -76,17 +76,27 @@ st.markdown("""
 def get_services():
     """Authenticate using a service account and return Google Slides and Drive services."""
     try:
-        creds_dict = json.loads(st.secrets["google_service_account"])
-        credentials = Credentials.from_service_account_info(creds_dict, scopes=[
-            "https://www.googleapis.com/auth/presentations",
-            "https://www.googleapis.com/auth/drive"
-        ])
+        # Convert Streamlit secret to a standard dictionary
+        creds_dict = json.loads(json.dumps(st.secrets["google_service_account"]))
+        
+        credentials = Credentials.from_service_account_info(
+            creds_dict, 
+            scopes=[
+                "https://www.googleapis.com/auth/presentations",
+                "https://www.googleapis.com/auth/drive"
+            ]
+        )
+
         slides_service = build('slides', 'v1', credentials=credentials)
         drive_service = build('drive', 'v3', credentials=credentials)
+        
         return slides_service, drive_service
+
     except Exception as e:
-        st.error(f"❌ Authentication failed: {str(e)}")
+        st.error(f"❌ Google authentication failed. Check Streamlit secrets.")
+        st.error(f"Error details: {str(e)}")
         return None, None
+
 
 def copy_presentation(drive_service, template_id, new_title):
     """Creates a copy of the template presentation and returns its ID."""

@@ -468,6 +468,14 @@ if generate_button:
                     
                     with st.expander("📑 Generated Content", expanded=True):
                         st.markdown(markdown_content, unsafe_allow_html=True)
+
+                        # Add markdown download button
+                        st.download_button(
+                            label="📥 Download Markdown",
+                            data=markdown_content,
+                            file_name=f"{topic}_presentation.md",
+                            mime="text/markdown"
+                
                 else:
                     st.error("❌ Failed to generate markdown content. Please try again.")
             except Exception as e:

@@ -394,6 +394,21 @@ def create_presentation(md_file_path):
 
 # Sidebar configuration
 with st.sidebar:
+    st.header("ℹ️ About")
+    st.markdown("""
+    PPT Generator is an AI-powered tool that helps you create professional presentations with ease. 
+    Simply enter your topic, and our AI agents will:
+    - Research your topic thoroughly
+    - Generate well-structured content
+    - Create a polished presentation
+    
+    Check this out to know more on API Keys-
+    - [Open AI API Key](https://platform.openai.com/docs/quickstart)
+    - [Serper API Key](https://docs.mindmac.app/how-to.../internet-browsing/get-serper-key)
+    """)
+    st.markdown("---")
+    
+    
     st.header("⚙️ Configuration")
     st.markdown("---")
 

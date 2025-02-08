@@ -620,6 +620,7 @@ if st.session_state.markdown_content:
     
     with download_col1:
         # Markdown download button
+        st.empty()
         st.download_button(
             label="📥 Download Markdown",
             data=st.session_state.markdown_content,

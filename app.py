@@ -19,6 +19,7 @@ import json
 import re
 import io
 from tenacity import retry, stop_after_attempt, wait_exponential
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

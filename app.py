@@ -291,85 +291,6 @@ def export_presentation(drive_service, presentation_id, output_path):
         f.write(file.read())
     logger.info(f"Presentation saved to {output_path}")
 
-# class EduFlow(Flow):
-#     def __init__(self, input_variables: Optional[Dict] = None):
-#         super().__init__()
-#         self.input_variables = input_variables or {}
-#         self._validate_input()
-#         logger.info(f"Initialized EduFlow with variables: {self.input_variables}")
-
-#     def _validate_input(self):
-#         if not self.input_variables.get("topic"):
-#             raise ValueError("Topic is required in input_variables")
-
-#     @start()
-#     def generate_reseached_content(self):
-#         try:
-#             logger.info("Starting research phase")
-#             research_output = Researchers().crew().kickoff(self.input_variables)
-#             if not research_output or not research_output.raw:
-#                 raise ValueError("Research crew produced no output")
-#             logger.info(f"Research phase completed. Output preview: {research_output.raw[:100]}...")
-#             return research_output.raw
-#         except Exception as e:
-#             logger.error(f"Research phase failed: {str(e)}", exc_info=True)
-#             raise
-
-#     @listen(generate_reseached_content)
-#     def generate_educational_content(self, research_content):
-#         try:
-#             logger.info("Starting writing phase")
-#             if not research_content:
-#                 raise ValueError("No research content received from previous phase")
-            
-#             combined_input = {
-#                 **self.input_variables,
-#                 "research_content": research_content
-#             }
-            
-#             writer_output = Writers().crew().kickoff(combined_input)
-#             if not writer_output or not writer_output.raw:
-#                 raise ValueError("Writer crew produced no output")
-            
-#             logger.info(f"Writing phase completed. Output preview: {writer_output.raw[:100]}...")
-#             return writer_output.raw
-        
-#         except Exception as e:
-#             logger.error(f"Writing phase failed: {str(e)}", exc_info=True)
-#             raise
-    
-#     @listen(generate_educational_content)
-#     def save_to_markdown(self, content):
-#         try:
-#             logger.info("Starting save phase")
-#             if not content:
-#                 raise ValueError("No content received to save")
-
-#             output_dir = os.path.abspath("output")
-#             os.makedirs(output_dir, exist_ok=True)
-
-#             topic = self.input_variables.get("topic")
-#             file_name = f"{topic}_presentation.md".replace(" ", "_").lower()
-#             output_path = os.path.join(output_dir, file_name)
-
-#             logger.info(f"Writing content to {output_path}")
-#             logger.debug(f"Content preview: {content[:100]}...")
-
-#             with open(output_path, "w", encoding='utf-8') as f:
-#                 f.write(content)
-
-#             logger.info(f"Content saved successfully to {output_path}")
-#             return output_path
-
-#         except Exception as e:
-#             logger.error(f"Save phase failed: {str(e)}", exc_info=True)
-#             raise
-
-#     def kickoff(self) -> str:
-#         result = super().kickoff()
-#         if isinstance(result, dict) and 'file_path' in result:
-#             return result['file_path']
-#         return result
 
 class EduFlow(Flow):
     def __init__(self, input_variables: Optional[Dict] = None):
@@ -387,17 +308,10 @@ class EduFlow(Flow):
         try:
             logger.info("Starting research phase")
             research_output = Researchers().crew().kickoff(self.input_variables)
-            
             if not research_output or not research_output.raw:
                 raise ValueError("Research crew produced no output")
-            
-            # Validate research output has minimum content
-            if len(research_output.raw) < 1000:  # Adjust threshold as needed
-                raise ValueError("Research output seems too short to generate a full presentation")
-                
-            logger.info(f"Research phase completed. Output length: {len(research_output.raw)}")
+            logger.info(f"Research phase completed. Output preview: {research_output.raw[:100]}...")
             return research_output.raw
-            
         except Exception as e:
             logger.error(f"Research phase failed: {str(e)}", exc_info=True)
             raise
@@ -415,27 +329,16 @@ class EduFlow(Flow):
             }
             
             writer_output = Writers().crew().kickoff(combined_input)
-            
-            # Validate writer output
             if not writer_output or not writer_output.raw:
                 raise ValueError("Writer crew produced no output")
             
-            # Check for minimum content length
-            if len(writer_output.raw) < 5000:  # Adjust threshold as needed
-                raise ValueError("Generated content seems too short for a 30-slide presentation")
-            
-            # Use the validation function from Writers class
-            from src.ppt_flow.crews.writers.writers import validate_presentation_content
-            if not validate_presentation_content(writer_output.raw):
-                raise ValueError("Generated content does not meet presentation requirements")
-            
-            logger.info(f"Writing phase completed. Output length: {len(writer_output.raw)}")
+            logger.info(f"Writing phase completed. Output preview: {writer_output.raw[:100]}...")
             return writer_output.raw
         
         except Exception as e:
             logger.error(f"Writing phase failed: {str(e)}", exc_info=True)
             raise
-
+    
     @listen(generate_educational_content)
     def save_to_markdown(self, content):
         try:
@@ -443,17 +346,15 @@ class EduFlow(Flow):
             if not content:
                 raise ValueError("No content received to save")
 
-            # Final validation before saving
-            from src.ppt_flow.crews.writers.writers import validate_presentation_content
-            if not validate_presentation_content(content):
-                raise ValueError("Content validation failed before saving")
-
             output_dir = os.path.abspath("output")
             os.makedirs(output_dir, exist_ok=True)
 
             topic = self.input_variables.get("topic")
             file_name = f"{topic}_presentation.md".replace(" ", "_").lower()
             output_path = os.path.join(output_dir, file_name)
+
+            logger.info(f"Writing content to {output_path}")
+            logger.debug(f"Content preview: {content[:100]}...")
 
             with open(output_path, "w", encoding='utf-8') as f:
                 f.write(content)
@@ -466,34 +367,11 @@ class EduFlow(Flow):
             raise
 
     def kickoff(self) -> str:
-        try:
-            result = super().kickoff()
-            if isinstance(result, dict) and 'file_path' in result:
-                return result['file_path']
-            return result
-        except Exception as e:
-            logger.error(f"Flow execution failed: {str(e)}", exc_info=True)
-            raise
+        result = super().kickoff()
+        if isinstance(result, dict) and 'file_path' in result:
+            return result['file_path']
+        return result
 
-def create_presentation(md_file_path):
-    """Creates a PowerPoint presentation from the markdown file."""
-    try:
-        presentation_title = os.path.splitext(os.path.basename(md_file_path))[0].replace('_', ' ')
-        output_path = os.path.join(os.path.dirname(md_file_path), f"{presentation_title}.pptx")
-        
-        slides_service, drive_service = get_services()
-        
-        presentation_id = copy_presentation(drive_service, TEMPLATE_ID, presentation_title)
-        slide_data = parse_markdown(md_file_path)
-        
-        for _, title, content, links in slide_data:
-            create_slide(slides_service, presentation_id, title, content, links)
-        
-        export_presentation(drive_service, presentation_id, output_path)
-        return output_path
-    except Exception as e:
-        logger.error(f"Error creating presentation: {str(e)}")
-        raise
 
 
 # Sidebar configuration

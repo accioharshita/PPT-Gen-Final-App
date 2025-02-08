@@ -3,7 +3,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool, ScrapeWebsiteTool
 from pydantic import BaseModel
 from typing import List
-from src.ppt_flow.llm_config import llm
+from src.ppt_flow.llm_config import get_llm
 # from tenacity import retry, wait_exponential, stop_after_attempt
 
 
@@ -14,13 +14,17 @@ class Researchers():
 	agents_config = 'config/agents.yaml'
 	tasks_config = 'config/tasks.yaml'
 
+	def __init__(self, model_name=None):
+        super().__init__()
+        self.llm = get_llm(model_name) 
+
 	@agent
 	def topic_explorer(self) -> Agent:
 		search_tool= SerperDevTool()
 		return Agent(
 			config=self.agents_config['topic_explorer'],
 			tools=[search_tool],
-			llm= llm,
+			llm= self.llm,
 			verbose=True
 		)
 
@@ -30,7 +34,7 @@ class Researchers():
 		return Agent(
 			config=self.agents_config['indepth_researcher'],
 			tools=[search_tool],
-			llm= llm,
+			llm= self.llm,
 			verbose=True,
 			memory=True
 		)

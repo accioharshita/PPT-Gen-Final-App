@@ -433,11 +433,83 @@ with st.sidebar:
 st.title("📄 PPT Generator")
 st.markdown("### Transform Your Ideas into Professional Presentations")
 
-# Initialize session state
+# # Initialize session state
+# if 'markdown_path' not in st.session_state:
+#     st.session_state.markdown_path = None
+# if 'presentation_path' not in st.session_state:
+#     st.session_state.presentation_path = None
+
+# col1, col2 = st.columns([3, 1])
+
+# with col1:
+#     topic = st.text_input(
+#         "What would you like to create a presentation about?",
+#         placeholder="Enter your topic here...",
+#     )
+
+# with col2:
+#     st.write("")  # Spacing
+#     generate_button = st.button("🚀 Generate Content", use_container_width=True)
+
+# # Handle content generation
+# if generate_button:
+#     if not topic.strip():
+#         st.error("🎯 Please enter a topic to generate content.")
+#     elif not openai_api_key or not serper_api_key:
+#         st.error("🔑 Please enter both OpenAI and Serper API Keys in the sidebar.")
+#     else:
+#         with st.spinner("🎨 Generating presentation content..."):
+#             try:
+#                 input_variables = {"topic": topic}
+#                 edu_flow = EduFlow(input_variables)
+#                 st.session_state.markdown_path = edu_flow.kickoff()
+
+#                 if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_path):
+#                     with open(st.session_state.markdown_path, "r", encoding="utf-8") as file:
+#                         markdown_content = file.read()
+                    
+#                     with st.expander("📑 Generated Content", expanded=True):
+#                         st.markdown(markdown_content, unsafe_allow_html=True)
+
+#                         # Add markdown download button
+#                         st.download_button(
+#                             label="📥 Download Markdown",
+#                             data=markdown_content,
+#                             file_name=f"{topic}_presentation.md",
+#                             mime="text/markdown")
+                
+#                 else:
+#                     st.error("❌ Failed to generate markdown content. Please try again.")
+#             except Exception as e:
+#                 st.error(f"❌ An error occurred: {str(e)}")
+
+# # Show create presentation button only if markdown content exists
+# if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_path):
+#     create_ppt_button = st.button("🎯 Create PowerPoint Presentation", use_container_width=True)
+    
+#     if create_ppt_button:
+#         with st.spinner("🎨 Creating PowerPoint presentation..."):
+#             try:
+#                 st.session_state.presentation_path = create_presentation(st.session_state.markdown_path)
+#                 st.success(f"✅ Presentation created successfully! Saved to: {st.session_state.presentation_path}")
+                
+#                 # Create download button
+#                 with open(st.session_state.presentation_path, "rb") as file:
+#                     btn = st.download_button(
+#                         label="📥 Download Presentation",
+#                         data=file,
+#                         file_name=os.path.basename(st.session_state.presentation_path),
+#                         mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+#                     )
+#             except Exception as e:
+#                 st.error(f"❌ An error occurred while creating the presentation: {str(e)}")
+
 if 'markdown_path' not in st.session_state:
     st.session_state.markdown_path = None
 if 'presentation_path' not in st.session_state:
     st.session_state.presentation_path = None
+if 'markdown_content' not in st.session_state:
+    st.session_state.markdown_content = None
 
 col1, col2 = st.columns([3, 1])
 
@@ -466,40 +538,48 @@ if generate_button:
 
                 if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_path):
                     with open(st.session_state.markdown_path, "r", encoding="utf-8") as file:
-                        markdown_content = file.read()
+                        st.session_state.markdown_content = file.read()
                     
                     with st.expander("📑 Generated Content", expanded=True):
-                        st.markdown(markdown_content, unsafe_allow_html=True)
-
-                        # Add markdown download button
-                        st.download_button(
-                            label="📥 Download Markdown",
-                            data=markdown_content,
-                            file_name=f"{topic}_presentation.md",
-                            mime="text/markdown")
-                
+                        st.markdown(st.session_state.markdown_content, unsafe_allow_html=True)
                 else:
                     st.error("❌ Failed to generate markdown content. Please try again.")
             except Exception as e:
                 st.error(f"❌ An error occurred: {str(e)}")
 
-# Show create presentation button only if markdown content exists
-if st.session_state.markdown_path and os.path.exists(st.session_state.markdown_path):
-    create_ppt_button = st.button("🎯 Create PowerPoint Presentation", use_container_width=True)
+# Create a container for the download buttons
+if st.session_state.markdown_content:
+    download_col1, download_col2 = st.columns(2)
     
-    if create_ppt_button:
-        with st.spinner("🎨 Creating PowerPoint presentation..."):
-            try:
-                st.session_state.presentation_path = create_presentation(st.session_state.markdown_path)
-                st.success(f"✅ Presentation created successfully! Saved to: {st.session_state.presentation_path}")
-                
-                # Create download button
-                with open(st.session_state.presentation_path, "rb") as file:
-                    btn = st.download_button(
-                        label="📥 Download Presentation",
-                        data=file,
-                        file_name=os.path.basename(st.session_state.presentation_path),
-                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                    )
-            except Exception as e:
-                st.error(f"❌ An error occurred while creating the presentation: {str(e)}")
+    with download_col1:
+        # Markdown download button
+        st.download_button(
+            label="📥 Download Markdown",
+            data=st.session_state.markdown_content,
+            file_name=f"{topic}_presentation.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+    
+    with download_col2:
+        # Create PowerPoint button
+        create_ppt_button = st.button("🎯 Create PowerPoint Presentation", use_container_width=True)
+        
+        if create_ppt_button:
+            with st.spinner("🎨 Creating PowerPoint presentation..."):
+                try:
+                    st.session_state.presentation_path = create_presentation(st.session_state.markdown_path)
+                    st.success(f"✅ Presentation created successfully! Saved to: {st.session_state.presentation_path}")
+                except Exception as e:
+                    st.error(f"❌ An error occurred while creating the presentation: {str(e)}")
+
+# PowerPoint download button (shows up after presentation is created)
+if st.session_state.presentation_path and os.path.exists(st.session_state.presentation_path):
+    with open(st.session_state.presentation_path, "rb") as file:
+        st.download_button(
+            label="📥 Download Presentation",
+            data=file,
+            file_name=os.path.basename(st.session_state.presentation_path),
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            use_container_width=True
+        )

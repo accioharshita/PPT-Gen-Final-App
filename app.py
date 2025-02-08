@@ -373,6 +373,26 @@ class EduFlow(Flow):
         return result
 
 
+def create_presentation(md_file_path):
+    """Creates a PowerPoint presentation from the markdown file."""
+    try:
+        presentation_title = os.path.splitext(os.path.basename(md_file_path))[0].replace('_', ' ')
+        output_path = os.path.join(os.path.dirname(md_file_path), f"{presentation_title}.pptx")
+        
+        slides_service, drive_service = get_services()
+        
+        presentation_id = copy_presentation(drive_service, TEMPLATE_ID, presentation_title)
+        slide_data = parse_markdown(md_file_path)
+        
+        for _, title, content, links in slide_data:
+            create_slide(slides_service, presentation_id, title, content, links)
+        
+        export_presentation(drive_service, presentation_id, output_path)
+        return output_path
+    except Exception as e:
+        logger.error(f"Error creating presentation: {str(e)}")
+        raise
+
 
 # Sidebar configuration
 with st.sidebar:

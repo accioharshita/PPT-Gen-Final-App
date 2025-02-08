@@ -299,6 +299,7 @@ class EduFlow(Flow):
         super().__init__()
         self.input_variables = input_variables or {}
         self._validate_input()
+        self.llm = get_llm(self.input_variables.get("model"))
         logger.info(f"Initialized EduFlow with variables: {self.input_variables}")
 
     def _validate_input(self):
@@ -481,6 +482,14 @@ with st.sidebar:
     st.header("⚙️ Configuration")
     st.markdown("---")
 
+    # Add model selection
+    model_choice = st.selectbox(
+        "🤖 Select GPT Model",
+        options=["gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+        index=0,  # Default to first option
+        key="model_choice"
+    )
+
     openai_api_key = st.text_input("🔑 OpenAI API Key", type="password", key="openai_key")
     if openai_api_key:
         os.environ["OPENAI_API_KEY"] = openai_api_key
@@ -599,7 +608,7 @@ if generate_button:
     else:
         with st.spinner("🎨 Generating presentation content..."):
             try:
-                input_variables = {"topic": topic}
+                input_variables = {"topic": topic, "model": st.session_state.model_choice}
                 edu_flow = EduFlow(input_variables)
                 st.session_state.markdown_path = edu_flow.kickoff()
 

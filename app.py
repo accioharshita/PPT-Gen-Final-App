@@ -9,6 +9,7 @@ from langtrace_python_sdk import langtrace
 from src.ppt_flow.crews.researchers.researchers import Researchers
 from src.ppt_flow.crews.writers.writers import Writers
 from crewai.flow.flow import Flow, start, listen
+from src.ppt_flow.llm_config import get_llm
 import logging
 from typing import Optional, Dict
 from google.oauth2 import service_account

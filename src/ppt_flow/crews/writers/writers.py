@@ -9,34 +9,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def validate_presentation_content(content: str) -> bool:
-    """Validates that the content meets the 30-slide requirement with proper formatting."""
-    try:
-        # Check if content is just a confirmation message
-        if len(content) < 500 or "has been reviewed" in content.lower():
-            logger.error("Content appears to be a confirmation message instead of actual slides")
-            return False
-
-        # Check for exactly 30 slides
-        slides = re.findall(r'### Slide \d+:', content)
-        if len(slides) != 30:
-            logger.error(f"Expected 30 slides, found {len(slides)}")
-            return False
-
-        # Check for 6 bullet points per slide
-        slide_contents = content.split('### Slide')[1:]
-        for i, slide in enumerate(slide_contents, 1):
-            bullet_points = re.findall(r'^\s*[•\-\*]\s+.+', slide, re.MULTILINE)
-            if len(bullet_points) != 6:
-                logger.error(f"Slide {i} has {len(bullet_points)} bullet points instead of 6")
-                return False
-
-        return True
-    except Exception as e:
-        logger.error(f"Validation error: {str(e)}")
-        return False
-
-
 
 def check_link(url):
     """Returns True if the link is valid, False if it's broken (404)."""
@@ -116,62 +88,32 @@ class Writers():
 
     @task
     @retry(wait=wait_exponential(multiplier=1, max=60), stop=stop_after_attempt(3))
-    # def content_writing_task(self) -> Task:
-    #     return Task(
-    #         config=self.tasks_config['content_writing_task'],
-    #         output_file='write-1.md'
-    #     )
     def content_writing_task(self) -> Task:
-        def validate_content(content):
-            if not validate_presentation_content(content):
-                raise ValueError("Generated content does not meet requirements")
-            return content
-
         return Task(
             config=self.tasks_config['content_writing_task'],
-            output_file='write-1.md',
-            function=validate_content
+            output_file='write-1.md'
         )
 
-    # @task
-    # def review_task(self) -> Task:
-    #     """Reviews content, finds and replaces broken links with new relevant examples."""
-    #     return Task(
-    #         config=self.tasks_config['review_task'],
-    #         function=self.review_links,  # Ensure function correctly returns content
-    #         output_file='final_reviewed.md'
-    #     )
-
-    # @retry(wait=wait_exponential(multiplier=1, max=60), stop=stop_after_attempt(5))
-    # def review_links(self, content):
-    #     """Validate links and replace broken ones with new examples."""
-    #     print("Before review:", content)  # Debugging log
-    #     updated_content = validate_and_replace_examples(content)
-    #     print("After review:", updated_content)  # Debugging log
-        
-    #     return updated_content  # Ensure modified content is returned
 
     @task
     @retry(wait=wait_exponential(multiplier=1, max=60), stop=stop_after_attempt(3))
     def review_task(self) -> Task:
         """Reviews content, finds and replaces broken links with new relevant examples."""
-        def review_and_validate(content):
-            logger.info("Starting content review")
-            if not validate_presentation_content(content):
-                raise ValueError("Content validation failed before link review")
-                
-            updated_content = validate_and_replace_examples(content)
-            
-            if not validate_presentation_content(updated_content):
-                raise ValueError("Content validation failed after link review")
-                
-            return updated_content
-
         return Task(
             config=self.tasks_config['review_task'],
-            function=review_and_validate,
+            function=self.review_links,  # Ensure function correctly returns content
             output_file='final_reviewed.md'
         )
+
+    @retry(wait=wait_exponential(multiplier=1, max=60), stop=stop_after_attempt(5))
+    def review_links(self, content):
+        """Validate links and replace broken ones with new examples."""
+        print("Before review:", content)  # Debugging log
+        updated_content = validate_and_replace_examples(content)
+        print("After review:", updated_content)  # Debugging log
+        
+        return updated_content  # Ensure modified content is returned
+
 
    
     @crew

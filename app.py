@@ -310,7 +310,8 @@ class EduFlow(Flow):
     def generate_reseached_content(self):
         try:
             logger.info("Starting research phase")
-            research_output = Researchers().crew().kickoff(self.input_variables)
+            researchers = Researchers(model_name=self.input_variables.get('model'))
+            research_output = researchers.crew().kickoff(self.input_variables)
             if not research_output or not research_output.raw:
                 raise ValueError("Research crew produced no output")
             logger.info(f"Research phase completed. Output preview: {research_output.raw[:100]}...")
@@ -331,7 +332,9 @@ class EduFlow(Flow):
                 "research_content": research_content
             }
             
-            writer_output = Writers().crew().kickoff(combined_input)
+            writers = Writers(model_name=self.input_variables.get('model'))
+            writer_output = writers.crew().kickoff(combined_input)
+            
             if not writer_output or not writer_output.raw:
                 raise ValueError("Writer crew produced no output")
             

@@ -18,6 +18,7 @@ from googleapiclient.http import MediaIoBaseDownload
 import json
 import re
 import io
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -373,6 +374,44 @@ class EduFlow(Flow):
         return result
 
 
+# def create_presentation(md_file_path):
+#     """Creates a PowerPoint presentation from the markdown file."""
+#     try:
+#         presentation_title = os.path.splitext(os.path.basename(md_file_path))[0].replace('_', ' ')
+#         output_path = os.path.join(os.path.dirname(md_file_path), f"{presentation_title}.pptx")
+        
+#         slides_service, drive_service = get_services()
+        
+#         presentation_id = copy_presentation(drive_service, TEMPLATE_ID, presentation_title)
+#         slide_data = parse_markdown(md_file_path)
+        
+#         for _, title, content, links in slide_data:
+#             create_slide(slides_service, presentation_id, title, content, links)
+        
+#         export_presentation(drive_service, presentation_id, output_path)
+#         return output_path
+#     except Exception as e:
+#         logger.error(f"Error creating presentation: {str(e)}")
+#         raise
+
+def handle_rate_limit(func):
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            time.sleep(1)  # Add a 1-second delay between API calls
+            return result
+        except HttpError as e:
+            if e.resp.status == 429:  # Rate limit exceeded
+                time.sleep(2)  # Wait longer if we hit the rate limit
+                raise  # Let retry handle it
+            raise
+    return wrapper
+
+
 def create_presentation(md_file_path):
     """Creates a PowerPoint presentation from the markdown file."""
     try:
@@ -384,9 +423,36 @@ def create_presentation(md_file_path):
         presentation_id = copy_presentation(drive_service, TEMPLATE_ID, presentation_title)
         slide_data = parse_markdown(md_file_path)
         
-        for _, title, content, links in slide_data:
-            create_slide(slides_service, presentation_id, title, content, links)
+        # Add progress bar
+        progress_bar = st.progress(0)
+        total_slides = len(slide_data)
         
+        for idx, (_, title, content, links) in enumerate(slide_data):
+            try:
+                # Add rate limiting to the batch update
+                @handle_rate_limit
+                def execute_batch_update(requests):
+                    return slides_service.presentations().batchUpdate(
+                        presentationId=presentation_id, 
+                        body={'requests': requests}
+                    ).execute()
+                
+                # Create slide with rate-limited batch updates
+                create_slide(slides_service, presentation_id, title, content, links)
+                progress = (idx + 1) / total_slides
+                progress_bar.progress(progress)
+                time.sleep(1)  # Add delay between slides
+                
+            except Exception as e:
+                st.warning(f"⚠️ Retrying slide {idx + 1} due to: {str(e)}")
+                time.sleep(2)  # Wait before retry
+                try:
+                    create_slide(slides_service, presentation_id, title, content, links)
+                except Exception as retry_error:
+                    st.error(f"❌ Failed to create slide {idx + 1}: {str(retry_error)}")
+                    continue
+        
+        progress_bar.progress(1.0)
         export_presentation(drive_service, presentation_id, output_path)
         return output_path
     except Exception as e:

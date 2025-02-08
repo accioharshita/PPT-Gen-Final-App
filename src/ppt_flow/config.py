@@ -2,7 +2,8 @@ import os
 
 LLM_CONFIGS = {
     "openai": {
-        "model": "gpt-4o-mini",
+        "available_models": ["gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+        "default_model": "gpt-4o-mini",
         "api_key": os.getenv('OPENAI_API_KEY')
     },
     "groq": {
@@ -15,8 +16,10 @@ LLM_CONFIGS = {
     }
 }
 
-LLM_CONFIG = LLM_CONFIGS["openai"] # Change this to switch between LLMs
-
-# EDU_FLOW_INPUT_VARIABLES = {
-#     "topic": input('Please Enter your topic here: ')
-# } 
+def get_llm_config(model_name=None):
+    config = LLM_CONFIGS["openai"].copy()
+    if model_name:
+        config["model"] = model_name
+    else:
+        config["model"] = config["default_model"]
+    return config

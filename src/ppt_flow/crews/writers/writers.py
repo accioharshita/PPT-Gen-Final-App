@@ -5,6 +5,9 @@ from crewai_tools import SerperDevTool
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from tenacity import retry, wait_exponential, stop_after_attempt
+import logging
+
+logger = logging.getLogger(__name__)
 
 def validate_presentation_content(content: str) -> bool:
     """Validates that the content meets the 30-slide requirement with proper formatting."""

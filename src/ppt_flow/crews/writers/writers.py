@@ -1,6 +1,6 @@
 import requests
 import re
-from src.ppt_flow.llm_config import llm
+from src.ppt_flow.llm_config import get_llm
 from crewai_tools import SerperDevTool
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
@@ -67,11 +67,15 @@ class Writers():
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
+    def __init__(self, model_name=None):
+        super().__init__()
+        self.llm = get_llm(model_name) 
+
     @agent
     def slide_content_writer(self) -> Agent:
         return Agent(
             config=self.agents_config['slide_content_writer'],
-            llm=llm,
+            llm=self.llm,
             verbose=True,
             memory=True
         )
@@ -81,7 +85,7 @@ class Writers():
         return Agent(
             config=self.agents_config['final_reviewer'],
             tools=[SerperDevTool()],  # Add Serper tool
-            llm=llm,
+            llm=self.llm,
             verbose=True,
             memory=True
         )

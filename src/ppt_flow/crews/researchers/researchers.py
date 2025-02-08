@@ -15,8 +15,8 @@ class Researchers():
 	tasks_config = 'config/tasks.yaml'
 
 	def __init__(self, model_name=None):
-        super().__init__()
-        self.llm = get_llm(model_name) 
+	        super().__init__()
+	        self.llm = get_llm(model_name) 
 
 	@agent
 	def topic_explorer(self) -> Agent:

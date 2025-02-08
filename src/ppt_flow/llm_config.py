@@ -1,7 +1,9 @@
 from crewai import LLM
-from .config import LLM_CONFIG
+from .config import get_llm_config
 
-llm = LLM(
-    model=LLM_CONFIG["model"],
-    api_key=LLM_CONFIG["api_key"]
-)
+def get_llm(model_name=None):
+    config = get_llm_config(model_name)
+    return LLM(
+        model=config["model"],
+        api_key=config["api_key"]
+    )

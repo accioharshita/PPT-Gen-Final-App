@@ -31,7 +31,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/presentations",
     "https://www.googleapis.com/auth/drive"
 ]
-TEMPLATE_ID = "10muavbFdRofRMVp6D8RFLFIaQxdJIqoKaQzu7xKh_FU"
+TEMPLATE_ID = "1rSFcqIKLfEt1My-3GYcv0kFeeg5fU7otq67s_HZR9d4"
 
 # Set page config must be the first Streamlit command
 st.set_page_config(
